@@ -20,7 +20,7 @@ def read_prod_df(spark):
     df = spark.read \
         .option("header", True) \
         .schema(prod_schema)\
-        .csv(r"C:\Users\NandiniSrinivas\PycharmProjects\Assignment\resource\Product.csv")
+        .csv("../../resource/Product.csv")
     return df
 
 def to_timestamp_con(prod_df, issue_date_to):
@@ -44,7 +44,7 @@ def createSource(spark):
     source_df = spark.read\
         .option("header", True)\
         .schema(source_schema)\
-        .csv(r"C:\Users\NandiniSrinivas\PycharmProjects\Assignment\resource\Source.csv")
+        .csv("../../resource/Source.csv")
     return source_df
 
 def to_snake_case(sou_df):
