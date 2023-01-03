@@ -15,7 +15,7 @@ def trasactiondf(spark):
         StructField("product_description", StringType(), True)
     ])
 
-    transaction_df = spark.read.option("header", True).schema(transactionSchema).csv(r"C:\Users\NandiniSrinivas\PycharmProjects\Assignment\resource\transaction.csv")
+    transaction_df = spark.read.option("header", True).schema(transactionSchema).csv('../../resource/transaction.csv')
     return transaction_df
 
 def userdf(spark):
@@ -25,7 +25,7 @@ def userdf(spark):
         StructField("nativelanguage", StringType(), True),
         StructField("location ", StringType(), True)
     ])
-    user_df = spark.read.option("header", True).schema(userSchema).csv(r"C:\Users\NandiniSrinivas\PycharmProjects\Assignment\resource\user.csv")
+    user_df = spark.read.option("header", True).schema(userSchema).csv("../../resource/user.csv")
     return user_df
 
 def joining_trans_user(transaction_df, user_df):
