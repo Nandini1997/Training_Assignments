@@ -6,7 +6,7 @@ def createSparkSession():
     return spark
 
 def createDfTorrent(spark,col1,rename_col_1,col2,rename_col_2,col3,rename_col_3):
-    df = spark.read.csv(r"C:\Users\NandiniSrinivas\PycharmProjects\Assignment\resource\ghtorrent-logs.txt")
+    df = spark.read.csv("../../resource/ghtorrent-logs.txt")
     torrent_df = df.withColumnRenamed(col1,rename_col_1).withColumnRenamed(col2,rename_col_2).withColumnRenamed(col3,rename_col_3)
     return torrent_df
 
