@@ -4,10 +4,9 @@ from Spark_1.code._utils_code import *
 spark = sparkSession()
 
 #creating transaction dataframe
-trans_df = trasactiondf(spark)
-
+trans_df = trasactiondf(spark,"../../resource/transaction.csv")
 #creating user dataframe
-user_df = userdf(spark)
+user_df = userdf(spark,"../../resource/user.csv")
 
 #joining two df
 print("Transaction Scema")
@@ -31,4 +30,5 @@ user_product.show()
 #Total spending done by each user on each product
 print("Total spending done by each user on each product")
 spendings = sum_spending_by_prod(trans_user_join, "userid", "product_id", "price")
+spendings.sort("Total Price").first()["Total Price"]
 spendings.show()
