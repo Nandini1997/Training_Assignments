@@ -4,12 +4,11 @@ from Pyspark.Code._utils_code import *
 spark = createSparkSession()
 
 #creating product details df
-prod_details_df=read_prod_df(spark)
+prod_details_df=read_prod_df(spark, "../../resource/Product.csv")
+prod_details_df.show()
 
-
-# converting milliseconds to time stamp format and conveting to date format only
-df_with_timestamp = to_timestamp_con(prod_details_df, "Issue_Date_timestamp")
-
+# converting milliseconds to time stamp format and converting to date format only
+df_with_timestamp = to_timestamp_con(prod_details_df, "Issue_Date_timestamp", "IssueDate", "Issue_Date_Form")
 
 #Fill null with nothing
 df_prod_details_res = fill_null_na(df_with_timestamp)
@@ -17,7 +16,7 @@ print("Printing final df after transformations")
 df_prod_details_res.show()
 
 #creating source df
-source_df = createSource(spark)
+source_df = createSource(spark, "../../resource/Source.csv")
 
 # Converting the column name from camel case to snake case
 df_source_col_name = to_snake_case(source_df)
