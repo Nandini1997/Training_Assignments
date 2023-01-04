@@ -6,7 +6,7 @@ def sparkSession():
     spark = SparkSession.builder.config("spark.driver.host", "localhost").getOrCreate()
     return spark
 
-def trasactiondf(spark):
+def trasactiondf(spark,path):
     transactionSchema = StructType([
         StructField("transaction_id", IntegerType(), True),
         StructField("product_id", IntegerType(), True),
@@ -15,17 +15,17 @@ def trasactiondf(spark):
         StructField("product_description", StringType(), True)
     ])
 
-    transaction_df = spark.read.option("header", True).schema(transactionSchema).csv('../../resource/transaction.csv')
+    transaction_df = spark.read.option("header", True).schema(transactionSchema).csv(path)
     return transaction_df
 
-def userdf(spark):
+def userdf(spark, path):
     userSchema = StructType([
         StructField("user_id", IntegerType(), True),
         StructField("emailid", StringType(), True),
         StructField("nativelanguage", StringType(), True),
         StructField("location ", StringType(), True)
     ])
-    user_df = spark.read.option("header", True).schema(userSchema).csv("../../resource/user.csv")
+    user_df = spark.read.option("header", True).schema(userSchema).csv(path)
     return user_df
 
 def joining_trans_user(transaction_df, user_df):
@@ -41,5 +41,5 @@ def prod_by_users(trans_user_df,userid,prod_desc):
     return products_users
 
 def sum_spending_by_prod(transaction_user_df,userid, prodid, price):
-    spending_each_price = transaction_user_df.groupBy("userid", "product_id").agg(sum("price").alias("Total Price"))
+    spending_each_price = transaction_user_df.groupBy(userid, prodid).agg(sum(price).alias("Total Price"))
     return spending_each_price
