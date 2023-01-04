@@ -8,7 +8,7 @@ def createSparkSession():
     spark = SparkSession.builder.config("spark.driver.host", "localhost").getOrCreate()
     return spark
 
-def read_prod_df(spark):
+def read_prod_df(spark,path):
     prod_schema = StructType([
         StructField("ProductName", StringType(), True),
         StructField("IssueDate",LongType(),True),
@@ -20,19 +20,19 @@ def read_prod_df(spark):
     df = spark.read \
         .option("header", True) \
         .schema(prod_schema)\
-        .csv("../../resource/Product.csv")
+        .csv(path)
     return df
 
-def to_timestamp_con(prod_df, issue_date_to):
-    df_ret = prod_df.withColumn(issue_date_to, from_unixtime(col("IssueDate")/1000))\
-    .withColumn("Issue_Date_Form", to_date(issue_date_to))
+def to_timestamp_con(prod_df, issue_date_to, column, Issue_Date_Form):
+    df_ret = prod_df.withColumn(issue_date_to, from_unixtime(col(column)/1000))\
+    .withColumn(Issue_Date_Form, to_date(issue_date_to))
     return df_ret
 
 def fill_null_na(df):
     df_res = df.na.fill("").select(col("ProductName"), col("Price"), col("Brand"), col("Country"), col("Product number").alias("ProductNumber"), col("Issue_Date_Form"))
     return df_res
 
-def createSource(spark):
+def createSource(spark, path):
     source_schema=StructType([
         StructField("SourceId",IntegerType(),True),
         StructField("TransactionNumber", IntegerType(), True),
@@ -44,7 +44,7 @@ def createSource(spark):
     source_df = spark.read\
         .option("header", True)\
         .schema(source_schema)\
-        .csv("../../resource/Source.csv")
+        .csv(path)
     return source_df
 
 def to_snake_case(sou_df):
