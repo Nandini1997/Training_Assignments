@@ -7,4 +7,4 @@ def find_iterator_anditerables(number, string1, slice_index):
     for i in combination_str:
         if 'a' in i:
             output_list.append(list(i))
-    print(round(len(output_list)/len(combination_str),4))
+    return (round(len(output_list)/len(combination_str),4))
