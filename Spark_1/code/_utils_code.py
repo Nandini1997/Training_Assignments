@@ -1,9 +1,9 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType
 from pyspark.sql.functions import split,col,countDistinct, sum
-
+from Pyspark.modularized_spark_session.spark_session import sparkSessionCreation
 def sparkSession():
-    spark = SparkSession.builder.config("spark.driver.host", "localhost").getOrCreate()
+    spark = sparkSessionCreation()
     return spark
 
 def trasactiondf(spark,path):
