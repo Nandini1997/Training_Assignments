@@ -1,83 +1,135 @@
 import unittest
+from pyspark.sql.types import StructType,StructField,StringType, IntegerType, LongType
 from Spark_2.code._utils_code import *
-
+from Pyspark.test.test_modularized_utils import *
+from Pyspark.modularized_spark_session.spark_session import sparkSessionCreation
 
 class UtilityTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        spark = createSparkSession()
+        spark = sparkSessionCreation()
         cls.spark = spark
 
-    def testCreateDfTorrent(self):
-        torrent_df = createDfTorrent(self.spark, "_c0", "LogLevel", "_c1", "timestamp", "_c2", "ghtorrent_details","../../test_resource/ghtorrent_test_log.txt")
-        count = torrent_df.count()
-        self.assertGreaterEqual(count, 0)
-
-    def testColumnName(self):
-        torrent_df = createDfTorrent(self.spark, "_c0", "LogLevel", "_c1", "timestamp", "_c2", "ghtorrent_details",
-                                     "../../test_resource/ghtorrent_test_log.txt")
-        actual_output = torrent_df.columns
-        expected_output = ['LogLevel', 'timestamp', 'ghtorrent_details']
-        self.assertEqual(actual_output, expected_output)
+    def log_input_data(self):
+        input_schema = StructType([
+            StructField("LogLevel", StringType(), True),
+            StructField("timestamp", StringType(), True),
+            StructField("ghtorrent_details", StringType(), True)
+        ])
+        data = [("DEBUG", "2017-03-23T11:15:14+00:00", "ghtorrent-30 -- retriever.rb: Commit mzvast/FlappyFrog -> 80bf5c5fde7be6274a2721422f4d9a773583f73c exists"),
+                ("DEBUG", "2017-03-23T11:15:14+00:00","ghtorrent-30 -- retriever.rb: Commit mzvast/FlappyFrog -> 80bf5c5fde7be6274a2721422f4d9a773583f73c exists"),
+("INFO", "2017-03-23T11:08:13+00:00", "ghtorrent-8 -- api_client.rb: Successful request. URL: https://api.github.com/repos/Particular/NServiceBus.Persistence.ServiceFabric/pulls/10/comments?per_page=100, Remaining: 3333, Total: 110 ms"),
+("DEBUG", "2017-03-23T12:02:06+00:00", "ghtorrent-31 -- ghtorrent.rb: Association of commit 7ce873512d609ed53a6c38eb32d5a1a706712c0d with repo ovh/cds exists"),
+("INFO", "2017-03-23T09:11:17+00:00", "ghtorrent-5 -- api_client.rb: Successful request. URL: https://api.github.com/repos/javier-serrano/web-ui-a2?per_page=100, Remaining: 3381, Total: 153 ms"),
+("WARN", "2017-03-23T10:33:43+00:00", "ghtorrent-23 -- ghtorrent.rb: Not a valid email address: greenkeeper[bot]")]
+        input_df = self.spark.createDataFrame(data, input_schema)
+        return input_df
 
     def testSplitRequiredColumn(self):
-        torrent_df = createDfTorrent(self.spark, "_c0", "LogLevel", "_c1", "timestamp", "_c2", "ghtorrent_details",
-                                     "../../test_resource/ghtorrent_test_log.txt")
-        torrent_df_extract = splitRequiredColumns(torrent_df)
-        actual_output = torrent_df_extract.columns
-        expected_output = ['LogLevel', 'timestamp', 'ghtorrent_client_id', 'downloader_id', 'repository_torrent', 'Request_status_ext', 'Request_status', 'request_url']
-        self.assertEqual(actual_output,expected_output)
+        transformed_df = splitRequiredColumns(self.log_input_data())
+        expected_schema = StructType([
+            StructField("LogLevel", StringType(), True),
+            StructField("timestamp", StringType(), True),
+            StructField("ghtorrent_client_id", StringType(), True),
+            StructField("downloader_id", StringType(), True),
+            StructField("repository_torrent", StringType(), True),
+            StructField("Request_status_ext", StringType(), True),
+            StructField("Request_status", StringType(), True),
+            StructField("request_url", StringType(), True)
+        ])
+        data = [
+            ("DEBUG", "2017-03-23T11:15:14+00:00", "ghtorrent-30", "30", "retriever.rb",
+             "Commit mzvast/FlappyFrog -> 80bf5c5fde7be6274a2721422f4d9a773583f73c exists",
+             "Commit mzvast/FlappyFrog -> 80bf5c5fde7be6274a2721422f4d9a773583f73c exists", ""),
+            ("INFO", "2017-03-23T11:08:13+00:00", "ghtorrent-8", "8", "api_client.rb", "Successful request. URL",
+             "Successful request. URL",
+             "https://api.github.com/repos/Particular/NServiceBus.Persistence.ServiceFabric/pulls/10/comments?per_page=100, Remaining: 3333, Total: 110 ms"),
+            ("DEBUG", "2017-03-23T12:02:06+00:00", "ghtorrent-31", "31", "ghtorrent.rb",
+             "Association of commit 7ce873512d609ed53a6c38eb32d5a1a706712c0d with repo ovh/cds exists",
+             "Association of commit 7ce873512d609ed53a6c38eb32d5a1a706712c0d with repo ovh/cds exists", ""),
+            ("INFO", "2017-03-23T09:11:17+00:00", "ghtorrent-5", "5", "api_client.rb", "Successful request. URL",
+             "Successful request. URL",
+             "https://api.github.com/repos/javier-serrano/web-ui-a2?per_page=100, Remaining: 3381, Total: 153 ms"),
+            ("WARN", "2017-03-23T10:33:43+00:00", "ghtorrent-23", "23", "ghtorrent.rb", "Not a valid email address",
+             "Not a valid email address", "")
+        ]
+        expected_df = self.spark.createDataFrame(data,expected_schema)
+        self.assertTrue(test_schema(transformed_df, expected_df))
+
 
     def testCountNumberLines(self):
-        torrent_df = createDfTorrent(self.spark, "_c0", "LogLevel", "_c1", "timestamp", "_c2", "ghtorrent_details",
-                                     "../../test_resource/ghtorrent_test_log.txt")
-        no_of_lines = torrent_df.count()
-        self.assertEqual(no_of_lines, 54)
+        transformed_df = count_number_of_lines(self.log_input_data())
+        expected_schema = StructType([
+            StructField("total_count", LongType(), False)
+        ])
+        data = [(6,)]
+        expected_df = self.spark.createDataFrame(data, expected_schema)
+        self.assertTrue(test_schema(transformed_df,expected_df))
+        self.assertTrue(test_data(transformed_df,expected_df))
 
     def testLogLevelCount(self):
-        torrent_df = createDfTorrent(self.spark, "_c0", "LogLevel", "_c1", "timestamp", "_c2", "ghtorrent_details",
-                                     "../../test_resource/ghtorrent_test_log.txt")
-        expected_count = filter_by_loglevel(torrent_df, "LogLevel", "WARN").first()["warn_count"]
-        self.assertEqual(expected_count, 3)
+        transformed_df = filter_by_loglevel(self.log_input_data(), "LogLevel", "WARN")
+        expected_schema = StructType([
+            StructField("warn_count", LongType(), False)
+        ])
+        data = [(1,)]
+        expected_df = self.spark.createDataFrame(data,expected_schema)
+        self.assertTrue(test_schema(transformed_df,expected_df))
+        self.assertTrue(test_data(transformed_df,expected_df))
 
     def testcountApiClient(self):
-        torrent_df = createDfTorrent(self.spark, "_c0", "LogLevel", "_c1", "timestamp", "_c2", "ghtorrent_details",
-                                     "../../test_resource/ghtorrent_test_log.txt")
-        torrent_df_extract = splitRequiredColumns(torrent_df)
-        expected_count = repoProcessedApiClient(torrent_df_extract, "api_client.rb", "repository_torrent").first()["api_client_repo_count"]
-        self.assertEqual(expected_count,12)
+        transformed_df = repoProcessedApiClient(splitRequiredColumns(self.log_input_data()),"api_client.rb", "repository_torrent")
+        expected_schema = StructType([
+            StructField("api_client_repo_count", LongType(), False)
+        ])
+        data = [(2,)]
+        expected_df = self.spark.createDataFrame(data, expected_schema)
+        self.assertTrue(test_schema(transformed_df,expected_df))
+        self.assertTrue(test_data(transformed_df,expected_df))
 
     def testMaxClientReq(self):
-        torrent_df = createDfTorrent(self.spark, "_c0", "LogLevel", "_c1", "timestamp", "_c2", "ghtorrent_details",
-                                     "../../test_resource/ghtorrent_test_log.txt")
-        torrent_df_extract = splitRequiredColumns(torrent_df)
-        expected_ouput = maxClientReq(torrent_df_extract, "request_url", "ghtorrent_client_id").first()["ghtorrent_client_id"]
-        actual_output = " ghtorrent-5 "
-        self.assertEqual(expected_ouput,actual_output)
+        transformed_df = maxClientReq(splitRequiredColumns(self.log_input_data()), "request_url", "ghtorrent_client_id")
+        expected_schema = StructType([
+            StructField("ghtorrent_client_id", StringType(), True),
+            StructField("count", LongType(), False)
+        ])
+        exped_data = [("ghtorrent-8 ",1),("ghtorrent-5 ",1)]
+        expected_df = self.spark.createDataFrame(exped_data,expected_schema)
+        self.assertTrue(test_schema(transformed_df,expected_df))
+        self.assertTrue(test_data(transformed_df,expected_df))
+
 
     def testGetFailedCount(self):
-        torrent_df = createDfTorrent(self.spark, "_c0", "LogLevel", "_c1", "timestamp", "_c2", "ghtorrent_details",
-                                     "../../test_resource/ghtorrent_test_log.txt")
-        torrent_df_extract = splitRequiredColumns(torrent_df)
-        expected_output = getFailedCount(torrent_df_extract, "Request_status_ext", "%Failed%", "ghtorrent_client_id", "max_failed_req_client").first()["max_failed_req_client"]
-        actual_output = " ghtorrent-13 "
-        self.assertEqual(expected_output,actual_output)
+        transformed_df = getFailedCount(splitRequiredColumns(self.log_input_data()), "Request_status_ext", "%Failed%", "ghtorrent_client_id", "max_failed_req_client")
+        expected_schema = StructType([
+            StructField("max_failed_req_client", StringType(), True),
+            StructField("count", LongType(), False)
+        ])
+        expected_df = self.spark.createDataFrame([], schema=expected_schema)
+        self.assertTrue(test_schema(transformed_df,expected_df))
+        self.assertTrue(test_data(transformed_df,expected_df))
 
     def testActiveHourse(self):
-        torrent_df = createDfTorrent(self.spark, "_c0", "LogLevel", "_c1", "timestamp", "_c2", "ghtorrent_details",
-                                     "../../test_resource/ghtorrent_test_log.txt")
-        torrent_df_extract = splitRequiredColumns(torrent_df)
-        expected_output = active_hours(torrent_df_extract).first()["active_hours"]
-        actual_output = 16
-        self.assertEqual(expected_output,actual_output)
+        transformed_data = active_hours(self.log_input_data())
+        expected_schema = StructType([
+            StructField("hours", IntegerType(), True),
+            StructField("count", LongType(), False)
+        ])
+        data = [(16,4),(17,1),(14,1)]
+        expected_df = self.spark.createDataFrame(data, expected_schema)
+        self.assertTrue(test_schema(transformed_data, expected_df))
+        self.assertTrue(test_data(transformed_data,expected_df))
 
     def testCountMaxRepo(self):
-        torrent_df = createDfTorrent(self.spark, "_c0", "LogLevel", "_c1", "timestamp", "_c2", "ghtorrent_details",
-                                     "../../test_resource/ghtorrent_test_log.txt")
-        torrent_df_extract = splitRequiredColumns(torrent_df)
-        expected_output = countRepo(torrent_df_extract, "repository_torrent", "active_repo_used").first()["active_repo_used"]
-        actual_output = " ghtorrent.rb"
-        self.assertEqual(expected_output,actual_output)
+        transformed_df = countRepo(splitRequiredColumns(self.log_input_data()), "repository_torrent", "active_repo_used")
+        expected_schema = StructType([
+            StructField("active_repo_used", StringType(), True),
+            StructField("count", LongType(), False)
+        ])
+        data = [(" api_client.rb",2),(" ghtorrent.rb",2),(" retriever.rb",2)]
+        expected_df = self.spark.createDataFrame(data, expected_schema)
+        self.assertTrue(test_schema(transformed_df, expected_df))
+        self.assertTrue(test_data(transformed_df, expected_df))
 
     @classmethod
     def tearDownClass(cls):
