@@ -9,6 +9,7 @@ class UnitTestCase(unittest.TestCase):
         spark=sparkSessionCreation()
         cls.spark=spark
 
+    #proctuct input data
     def prod_input_data(self):
         inputProdSchema = StructType([
             StructField("ProductName", StringType(), True),
@@ -23,6 +24,7 @@ class UnitTestCase(unittest.TestCase):
         input_df = self.spark.createDataFrame(input_data, schema=inputProdSchema)
         return input_df
 
+    #source input data
     def source_input_data(self):
         source_schema = StructType([
             StructField("SourceId", IntegerType(), True),
@@ -35,6 +37,8 @@ class UnitTestCase(unittest.TestCase):
         input_data = [(150711, 123456, "EN", 456789, "2021-12-27T08:20:29.842+0000", 1000)]
         input_df = self.spark.createDataFrame(input_data, schema=source_schema)
         return input_df
+
+    # converting milliseconds to time stamp format and converting to date format only
     def test_transformation(self):
         tranformed_df = to_timestamp_con(self.prod_input_data(), "Issue_Date_timestamp", "IssueDate", "Issue_Date_Form")
         expectedSchema = StructType([
@@ -53,6 +57,7 @@ class UnitTestCase(unittest.TestCase):
         self.assertTrue(test_schema(tranformed_df, expected_df))
         self.assertTrue(test_data(tranformed_df, expected_df))
 
+    # Converting the column name from camel case to snake case
     def test_snakecase(self):
         transformed = to_snake_case(self.source_input_data())
         expected_schema = StructType([
@@ -67,7 +72,7 @@ class UnitTestCase(unittest.TestCase):
         expected_df = self.spark.createDataFrame(expected_data, schema=expected_schema)
         self.assertTrue(transformed,expected_df)
 
-
+    # Converting start_time to unix time seconds and adding it as new column
     def test_to_unix_timestamp(self):
         transformed_df = to_unix_timestamp(self.source_input_data(), "epoch_seconds", "StartTime")
         expected_schema = StructType([
