@@ -1,11 +1,12 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.types import StructType,StructField, StringType, IntegerType,TimestampType,LongType
+from pyspark.sql.types import StructType,StructField, StringType, IntegerType,TimestampType,LongType, DateType
 from pyspark.sql.functions import col,from_unixtime,to_timestamp, to_date, unix_timestamp
+from Pyspark.modularized_spark_session.spark_session import sparkSessionCreation
 import re
 from functools import reduce
 
 def createSparkSession():
-    spark = SparkSession.builder.config("spark.driver.host", "localhost").getOrCreate()
+    spark = sparkSessionCreation()
     return spark
 
 def read_prod_df(spark,path):
@@ -25,7 +26,7 @@ def read_prod_df(spark,path):
 
 def to_timestamp_con(prod_df, issue_date_to, column, Issue_Date_Form):
     df_ret = prod_df.withColumn(issue_date_to, from_unixtime(col(column)/1000))\
-    .withColumn(Issue_Date_Form, to_date(issue_date_to))
+    .withColumn(Issue_Date_Form, to_date(issue_date_to)).drop(col("Issue_Date_timestamp"))
     return df_ret
 
 def fill_null_na(df):
@@ -54,7 +55,7 @@ def to_snake_case(sou_df):
     return df_ret
 
 def to_unix_timestamp(df, col_name, date_column):
-    df_res = df.withColumn(col_name, unix_timestamp(col(date_column), "yyyy-dd-MM HH:mm:ss"))
+    df_res = df.withColumn(col_name, unix_timestamp(col(date_column).cast(TimestampType()), "yyyy-dd-MM HH:mm:ss"))
     return df_res
 
 def to_join_prod_source(df1,df2, filter_string):
