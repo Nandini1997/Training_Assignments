@@ -10,6 +10,7 @@ class UtilityTestCase(unittest.TestCase):
         spark = sparkSessionCreation()
         cls.spark = spark
 
+    # input log file sample data
     def log_input_data(self):
         input_schema = StructType([
             StructField("LogLevel", StringType(), True),
@@ -25,6 +26,7 @@ class UtilityTestCase(unittest.TestCase):
         input_df = self.spark.createDataFrame(data, input_schema)
         return input_df
 
+    # Testing df with required fields by splitting
     def testSplitRequiredColumn(self):
         transformed_df = splitRequiredColumns(self.log_input_data())
         expected_schema = StructType([
@@ -56,7 +58,7 @@ class UtilityTestCase(unittest.TestCase):
         expected_df = self.spark.createDataFrame(data,expected_schema)
         self.assertTrue(test_schema(transformed_df, expected_df))
 
-
+    # Testing total number of lines
     def testCountNumberLines(self):
         transformed_df = count_number_of_lines(self.log_input_data())
         expected_schema = StructType([
@@ -67,6 +69,7 @@ class UtilityTestCase(unittest.TestCase):
         self.assertTrue(test_schema(transformed_df,expected_df))
         self.assertTrue(test_data(transformed_df,expected_df))
 
+    # Testing total number of warnings loglevel
     def testLogLevelCount(self):
         transformed_df = filter_by_loglevel(self.log_input_data(), "LogLevel", "WARN")
         expected_schema = StructType([
@@ -77,6 +80,7 @@ class UtilityTestCase(unittest.TestCase):
         self.assertTrue(test_schema(transformed_df,expected_df))
         self.assertTrue(test_data(transformed_df,expected_df))
 
+    # Testing which api_client
     def testcountApiClient(self):
         transformed_df = repoProcessedApiClient(splitRequiredColumns(self.log_input_data()),"api_client.rb", "repository_torrent")
         expected_schema = StructType([
@@ -87,6 +91,7 @@ class UtilityTestCase(unittest.TestCase):
         self.assertTrue(test_schema(transformed_df,expected_df))
         self.assertTrue(test_data(transformed_df,expected_df))
 
+    # Testing client with HTTP requests count
     def testMaxClientReq(self):
         transformed_df = maxClientReq(splitRequiredColumns(self.log_input_data()), "request_url", "ghtorrent_client_id")
         expected_schema = StructType([
@@ -98,7 +103,7 @@ class UtilityTestCase(unittest.TestCase):
         self.assertTrue(test_schema(transformed_df,expected_df))
         self.assertTrue(test_data(transformed_df,expected_df))
 
-
+    # Testing which client did most FAILED HTTP requests
     def testGetFailedCount(self):
         transformed_df = getFailedCount(splitRequiredColumns(self.log_input_data()), "Request_status_ext", "%Failed%", "ghtorrent_client_id", "max_failed_req_client")
         expected_schema = StructType([
@@ -109,6 +114,7 @@ class UtilityTestCase(unittest.TestCase):
         self.assertTrue(test_schema(transformed_df,expected_df))
         self.assertTrue(test_data(transformed_df,expected_df))
 
+    # Testing the active hour of day
     def testActiveHourse(self):
         transformed_data = active_hours(self.log_input_data())
         expected_schema = StructType([
@@ -120,6 +126,7 @@ class UtilityTestCase(unittest.TestCase):
         self.assertTrue(test_schema(transformed_data, expected_df))
         self.assertTrue(test_data(transformed_data,expected_df))
 
+    # Testing what is the most active repository
     def testCountMaxRepo(self):
         transformed_df = countRepo(splitRequiredColumns(self.log_input_data()), "repository_torrent", "active_repo_used")
         expected_schema = StructType([
