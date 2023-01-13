@@ -4,12 +4,10 @@ from Spark_2.code._utils_code import *
 spark = createSparkSession()
 
 #Reading the log file of ghtorrent and renaming column name
-ghtorrentdf = createDfTorrent(spark, "_c0", "LogLevel", "_c1", "timestamp", "_c2", "ghtorrent_details","../../resource/ghtorrent-logs.txt")
+ghtorrentdf = createDfTorrent(spark, "_c0", "LogLevel", "_c1", "timestamp", "_c2", "ghtorrent_details")
 
 #creating df with required fields by splitting
 torrent_df_extract = splitRequiredColumns(ghtorrentdf)
-print("Printing the torrent df")
-torrent_df_extract.show()
 
 # total number of lines
 count = count_number_of_lines(torrent_df_extract)
