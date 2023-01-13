@@ -1,12 +1,16 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, split, count, trim, to_timestamp, hour
+from pyspark.sql.functions import col, count, trim
+from pyspark.sql.functions import split, to_timestamp, hour
+from pyspark.sql.types import TimestampType
+from Pyspark.modularized_spark_session.spark_session import sparkSessionCreation
+
 
 def createSparkSession():
-    spark = SparkSession.builder.config("spark.driver.host", "localhost").getOrCreate()
+    spark = sparkSessionCreation()
     return spark
 
-def createDfTorrent(spark,col1,rename_col_1,col2,rename_col_2,col3,rename_col_3, path):
-    df = spark.read.csv(path)
+def createDfTorrent(spark,col1,rename_col_1,col2,rename_col_2,col3,rename_col_3):
+    df = spark.read.csv("../../resource/ghtorrent-logs.txt")
     torrent_df = df.withColumnRenamed(col1,rename_col_1).withColumnRenamed(col2,rename_col_2).withColumnRenamed(col3,rename_col_3)
     return torrent_df
 
@@ -38,9 +42,6 @@ def repoProcessedApiClient(df,filter_string, col_name):
 
 def maxClientReq(df, column_name, group_by_column):
     total_http_client_req = df.filter(col(column_name).isNotNull()).groupBy(group_by_column).count()
-    # total_http_client_req = df.select(col("ghtorrent_client_id"),
-    #                                                         col("request_url").isNotNull()).filter(
-    #     col("(request_url IS NOT NULL)") == True).groupBy("ghtorrent_client_id").count()
     max_http_client_req_count = total_http_client_req.sort(col("count").desc())
     return max_http_client_req_count
 
@@ -56,18 +57,9 @@ def active_hours(df):
         .withColumn("hours", hour(col("timestamp_new"))).groupBy("hours").count()
     df_active_hours = df_with_hours.withColumnRenamed("hours", "active_hours")
     df_res = df_active_hours.sort(col("count").desc())
-    return df_res
-    # df_with_hours = df.withColumn(col_to_add, to_timestamp(col(column))) \
-    #     .withColumn(col_to_add1, hour(col(column1))).groupBy(col_to_add).count()
-    # df_active_hours = df_with_hours.withColumnRenamed(col_to_add, rename_col)
-    # df_res = df_active_hours.sort(col("count").desc())
-    # return df_res
+    return df_with_hours
 
 def countRepo(df, groupby_col, renamed_col):
-    # count_repo = df.groupBy("repository_torrent").count()
-    # count_repo_active = count_repo.withColumnRenamed("repository_torrent", "active_repo_used")
-    # active_repository = count_repo_active.sort(col("count").desc())
-    # return active_repository
     count_repo = df.groupBy(groupby_col).count()
     count_repo_active = count_repo.withColumnRenamed(groupby_col, renamed_col)
     active_repository = count_repo_active.sort(col("count").desc())
