@@ -9,6 +9,7 @@ class UtilityTestCase(unittest.TestCase):
         spark = sparkSessionCreation()
         cls.spark = spark
 
+    #transaction sample input data
     def transaction_input(self):
         input_schema =  StructType([
         StructField("transaction_id", IntegerType(), True),
@@ -21,6 +22,7 @@ class UtilityTestCase(unittest.TestCase):
         input_df = self.spark.createDataFrame(data, input_schema)
         return input_df
 
+    #user input sample data
     def user_input(self):
         userSchema = StructType([
             StructField("user_id", IntegerType(), True),
