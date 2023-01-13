@@ -1,33 +1,88 @@
 from Pyspark.Code._utils_code import *
+from Pyspark.test.test_modularized_utils import *
+from Pyspark.modularized_spark_session.spark_session import sparkSessionCreation
+import datetime
 import unittest
 class UnitTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        spark=createSparkSession()
+        spark=sparkSessionCreation()
         cls.spark=spark
 
-    def test_creation_df(self):
-        prod_df = read_prod_df(self.spark, "../../test_resource/Product_test.csv")
-        no_of_row = prod_df.count()
-        self.assertEqual(no_of_row, 2)
-    def test_source_creation_df(self):
-        source_df = createSource(self.spark, "../../test_resource/Source_test.csv")
-        no_of_rows = source_df.count()
-        self.assertEqual(no_of_rows, 1)
+    def prod_input_data(self):
+        inputProdSchema = StructType([
+            StructField("ProductName", StringType(), True),
+            StructField("IssueDate", LongType(), True),
+            StructField("Price", IntegerType(), True),
+            StructField("Brand", StringType(), True),
+            StructField("Country", StringType(), True),
+            StructField("Product number", IntegerType(), True)
+        ])
+        input_data = [("Washing Machine", 1648770933000, 20000, "Samsung", "India", 1000),
+                      ("Refrigerator", 1648770999000, 35000, "LG", "", 2000)]
+        input_df = self.spark.createDataFrame(input_data, schema=inputProdSchema)
+        return input_df
 
-    def test_snake_case(self):
-        source_df = createSource(self.spark, "../../test_resource/Source_test.csv")
-        df = to_snake_case(source_df)
-        actual_list = df.columns
-        expected_list = ['source_id', 'transaction_number', 'language', 'model_number', 'start_time', 'product_number']
-        self.assertEqual(actual_list, expected_list)
+    def source_input_data(self):
+        source_schema = StructType([
+            StructField("SourceId", IntegerType(), True),
+            StructField("TransactionNumber", IntegerType(), True),
+            StructField("Language", StringType(), True),
+            StructField("ModelNumber", IntegerType(), True),
+            StructField("StartTime", StringType(), True),
+            StructField("ProductNumber", IntegerType(), True)
+        ])
+        input_data = [(150711, 123456, "EN", 456789, "2021-12-27T08:20:29.842+0000", 1000)]
+        input_df = self.spark.createDataFrame(input_data, schema=source_schema)
+        return input_df
+    def test_transformation(self):
+        tranformed_df = to_timestamp_con(self.prod_input_data(), "Issue_Date_timestamp", "IssueDate", "Issue_Date_Form")
+        expectedSchema = StructType([
+            StructField("ProductName", StringType(), True),
+            StructField("IssueDate", LongType(), True),
+            StructField("Price", IntegerType(), True),
+            StructField("Brand", StringType(), True),
+            StructField("Country", StringType(), True),
+            StructField("Product number", IntegerType(), True),
+            StructField("Issue_Date_Form", DateType(), True)
+        ])
+
+        output_data = [("Washing Machine", 1648770933000, 20000, "Samsung", "India", 1000, datetime.date(2022, 4, 1)),
+                     ("Refrigerator", 1648770999000, 35000, "LG", "", 2000, datetime.date(2022, 4, 1))]
+        expected_df = self.spark.createDataFrame(output_data, schema=expectedSchema)
+        self.assertTrue(test_schema(tranformed_df, expected_df))
+        self.assertTrue(test_data(tranformed_df, expected_df))
+
+    def test_snakecase(self):
+        transformed = to_snake_case(self.source_input_data())
+        expected_schema = StructType([
+            StructField("source_id", IntegerType(),True),
+            StructField("transaction_number", IntegerType(), True),
+            StructField("language", StringType(), True),
+            StructField("model_number", IntegerType(), True),
+            StructField("start_time", StringType(), True),
+            StructField("product_number", IntegerType(), True)
+            ])
+        expected_data = [(150711, 123456, "EN", 456789, "2021-12-27T08:20:29.842+0000", 1000)]
+        expected_df = self.spark.createDataFrame(expected_data, schema=expected_schema)
+        self.assertTrue(transformed,expected_df)
+
 
     def test_to_unix_timestamp(self):
-        source_df = createSource(self.spark, "../../test_resource/Source_test.csv")
-        df = to_unix_timestamp(source_df, "epoch_seconds", "StartTime")
-        expected = df.first()["epoch_seconds"]
-        actual = 1640593229
-        self.assertEqual(expected,actual)
+        transformed_df = to_unix_timestamp(self.source_input_data(), "epoch_seconds", "StartTime")
+        expected_schema = StructType([
+            StructField("SourceId", IntegerType(), True),
+            StructField("TransactionNumber", IntegerType(), True),
+            StructField("Language", StringType(), True),
+            StructField("ModelNumber", IntegerType(), True),
+            StructField("StartTime", StringType(), True),
+            StructField("ProductNumber", IntegerType(), True),
+            StructField("epoch_seconds", LongType(), True)
+        ])
+        data = [(150711,123456,"EN",456789,"2021-12-27T08:20:29.842+0000",1000,1640593229)]
+        expected_df = self.spark.createDataFrame(data, expected_schema)
+        self.assertTrue(test_schema(transformed_df, expected_df))
+        self.assertTrue(test_data(transformed_df, expected_df))
 
     @classmethod
     def tearDownClass(cls):
